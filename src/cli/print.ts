@@ -1203,9 +1203,10 @@ function runHeadlessStreaming(
       description: option.description,
       ...(hasEffort && {
         supportsEffort: true,
-        supportedEffortLevels: modelSupportsMaxEffort(resolvedModel)
+        supportedEffortLevels: (modelSupportsMaxEffort(resolvedModel)
           ? [...EFFORT_LEVELS]
-          : EFFORT_LEVELS.filter(l => l !== 'max'),
+          : EFFORT_LEVELS.filter(l => l !== 'max')
+        ).map(level => (level === 'high' ? 'xhigh' : level)),
       }),
       ...(hasAdaptiveThinking && { supportsAdaptiveThinking: true }),
       ...(hasFastMode && { supportsFastMode: true }),
@@ -3762,7 +3763,12 @@ function runHeadlessStreaming(
             applied: {
               model,
               // Numeric effort (ant-only) → null; SDK schema is string-level only.
-              effort: typeof effort === 'string' ? effort : null,
+              effort:
+                typeof effort === 'string'
+                  ? effort === 'high'
+                    ? 'xhigh'
+                    : effort
+                  : null,
             },
           })
         } else if (message.request.subtype === 'stop_task') {

@@ -4,7 +4,7 @@ import { Box, Text } from '../ink.js';
 import { isMaxSubscriber, isProSubscriber, isTeamSubscriber } from '../utils/auth.js';
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import type { EffortLevel } from '../utils/effort.js';
-import { convertEffortValueToLevel, getDefaultEffortForModel, getOpusDefaultEffortConfig, toPersistableEffort } from '../utils/effort.js';
+import { convertEffortValueToLevel, getDefaultEffortForModel, getEffortDisplayLabel, getOpusDefaultEffortConfig, toPersistableEffort } from '../utils/effort.js';
 import { parseUserSpecifiedModel } from '../utils/model/model.js';
 import { updateSettingsForSource } from '../utils/settings/settings.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
@@ -104,11 +104,11 @@ export function EffortCallout(t0) {
   let t9;
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
     t9 = [{
-      label: <EffortOptionLabel level="medium" text="Medium (recommended)" />,
-      value: "medium"
-    }, {
-      label: <EffortOptionLabel level="high" text="High" />,
+      label: <EffortOptionLabel level="high" text="Xhigh (recommended)" />,
       value: "high"
+    }, {
+      label: <EffortOptionLabel level="medium" text="Medium" />,
+      value: "medium"
     }, {
       label: <EffortOptionLabel level="low" text="Low" />,
       value: "low"
@@ -141,7 +141,7 @@ export function EffortCallout(t0) {
   }
   let t13;
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = <Box marginBottom={1}><Text dimColor={true}>{t11} low {"\xB7"}{" "}{t12} medium {"\xB7"}{" "}<EffortIndicatorSymbol level="high" /> high</Text></Box>;
+    t13 = <Box marginBottom={1}><Text dimColor={true}>{t11} low {"\xB7"}{" "}{t12} medium {"\xB7"}{" "}<EffortIndicatorSymbol level="high" /> {getEffortDisplayLabel("high")}</Text></Box>;
     $[15] = t13;
   } else {
     t13 = $[15];
@@ -212,8 +212,8 @@ function EffortOptionLabel(t0) {
  * Check whether to show the effort callout.
  *
  * Audience:
- * - Pro: already had medium default; show unless they saw v1 (effortCalloutDismissed)
- * - Max/Team: getting medium via tengu_grey_step2 config; show when enabled
+ * - Pro: show the updated Xhigh default unless they already saw the v1 dialog
+ * - Max/Team: show when the rollout config is enabled
  * - Everyone else: mark as dismissed so it never shows
  */
 export function shouldShowEffortCallout(model: string): boolean {
@@ -232,8 +232,8 @@ export function shouldShowEffortCallout(model: string): boolean {
     return false;
   }
 
-  // Pro users already had medium default before this PR. Show the new copy,
-  // but skip if they already saw the v1 dialog — no point nagging twice.
+  // Show updated Xhigh copy to Pro users, but skip if they already saw the
+  // earlier dialog — no point nagging twice.
   if (isProSubscriber()) {
     if (config.effortCalloutDismissed) {
       markV2Dismissed();

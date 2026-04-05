@@ -749,7 +749,7 @@ function PromptInput({
     if (thinkTriggers.length && isUltrathinkEnabled()) {
       addNotification({
         key: 'ultrathink-active',
-        text: 'Effort set to high for this turn',
+        text: 'Effort set to xhigh for this turn',
         priority: 'immediate',
         timeoutMs: 5000
       });

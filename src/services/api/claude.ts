@@ -438,8 +438,14 @@ function configureEffortParams(
   if (effortValue === undefined) {
     betas.push(EFFORT_BETA_HEADER)
   } else if (typeof effortValue === 'string') {
-    // Send string effort level as is
-    outputConfig.effort = effortValue as "high" | "medium" | "low" | "max"
+    const requestEffort =
+      effortValue === 'high' ? 'xhigh' : effortValue
+    // Send string effort level as the wire value expected by the backend.
+    ;(
+      outputConfig as BetaOutputConfig & {
+        effort?: 'low' | 'medium' | 'xhigh' | 'max'
+      }
+    ).effort = requestEffort
     betas.push(EFFORT_BETA_HEADER)
   } else if (process.env.USER_TYPE === 'ant') {
     // Numeric effort override - ant-only (uses anthropic_internal)

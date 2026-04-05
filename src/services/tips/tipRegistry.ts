@@ -516,7 +516,7 @@ const externalTips: Tip[] = [
     id: 'effort-high-nudge',
     content: async ctx => {
       const blue = color('suggestion', ctx.theme)
-      const cmd = blue('/effort high')
+      const cmd = blue('/effort xhigh')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
       >('tengu_tide_elm', 'off')

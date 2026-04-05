@@ -24,6 +24,10 @@ const {
   parseEffortValue,
   isValidNumericEffort,
   convertEffortValueToLevel,
+  getDefaultEffortForModel,
+  getEffortDisplayLabel,
+  getEffortDisplayTitle,
+  getEffortSuffix,
   getEffortLevelDescription,
   resolvePickerEffortPersistence,
   EFFORT_LEVELS,
@@ -107,6 +111,11 @@ describe("parseEffortValue", () => {
   test("handles case-insensitive effort level strings", () => {
     expect(parseEffortValue("LOW")).toBe("low");
     expect(parseEffortValue("HIGH")).toBe("high");
+  });
+
+  test("maps xhigh alias to canonical high", () => {
+    expect(parseEffortValue("xhigh")).toBe("high");
+    expect(parseEffortValue("XHIGH")).toBe("high");
   });
 });
 
@@ -222,6 +231,30 @@ describe("getEffortLevelDescription", () => {
   test("returns description for 'max'", () => {
     const desc = getEffortLevelDescription("max");
     expect(desc).toContain("Maximum");
+  });
+});
+
+describe("effort display helpers", () => {
+  test("formats high as xhigh for lowercase displays", () => {
+    expect(getEffortDisplayLabel("high")).toBe("xhigh");
+    expect(getEffortDisplayLabel("max")).toBe("max");
+    expect(getEffortDisplayLabel(42)).toBe("42");
+  });
+
+  test("formats high as Xhigh for title displays", () => {
+    expect(getEffortDisplayTitle("high")).toBe("Xhigh");
+    expect(getEffortDisplayTitle("medium")).toBe("Medium");
+  });
+
+  test("renders xhigh in effort suffix", () => {
+    expect(getEffortSuffix("claude-opus-4-6", "high")).toBe(" with xhigh effort");
+  });
+});
+
+describe("getDefaultEffortForModel", () => {
+  test("defaults supported external models to xhigh/high", () => {
+    expect(getDefaultEffortForModel("claude-opus-4-6")).toBe("high");
+    expect(getDefaultEffortForModel("claude-sonnet-4-6")).toBe("high");
   });
 });
 

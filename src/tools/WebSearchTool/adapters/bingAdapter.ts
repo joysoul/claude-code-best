@@ -6,6 +6,7 @@
 import axios from 'axios'
 import he from 'he'
 import { AbortError } from '../../../utils/errors.js'
+import { getBingSearchUserAgent } from '../../../utils/userAgent.js'
 import type { SearchResult, SearchOptions, WebSearchAdapter } from './types.js'
 
 const FETCH_TIMEOUT_MS = 30_000
@@ -14,24 +15,26 @@ const FETCH_TIMEOUT_MS = 30_000
  * Browser-like headers to avoid Bing's anti-bot JS-rendered response.
  * These mimic Microsoft Edge on macOS to get full HTML search results.
  */
-const BROWSER_HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Cache-Control': 'no-cache',
-  Pragma: 'no-cache',
-  'Sec-Ch-Ua': '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-  'Sec-Ch-Ua-Mobile': '?0',
-  'Sec-Ch-Ua-Platform': '"macOS"',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-} as const
+function getBrowserHeaders() {
+  return {
+    'User-Agent': getBingSearchUserAgent(),
+    Accept:
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+    'Sec-Ch-Ua':
+      '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"macOS"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+  } as const
+}
 
 export class BingSearchAdapter implements WebSearchAdapter {
   async search(
@@ -59,7 +62,7 @@ export class BingSearchAdapter implements WebSearchAdapter {
         signal: abortController.signal,
         timeout: FETCH_TIMEOUT_MS,
         responseType: 'text',
-        headers: BROWSER_HEADERS,
+        headers: getBrowserHeaders(),
       })
       html = response.data
     } catch (e) {

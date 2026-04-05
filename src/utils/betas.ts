@@ -270,6 +270,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     includeFirstPartyOnlyBetas &&
     modelSupportsISP(model) &&
     !getIsNonInteractiveSession() &&
+    !isEnvTruthy(process.env.CLAUDE_CODE_FORCE_SHOW_THINKING) &&
     getInitialSettings().showThinkingSummaries !== true
   ) {
     betaHeaders.push(REDACT_THINKING_BETA_HEADER)

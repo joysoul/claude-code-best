@@ -1,7 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
-import { isProSubscriber, isMaxSubscriber, isTeamSubscriber } from './auth.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAPIProvider } from './model/providers.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
@@ -20,6 +19,26 @@ export const EFFORT_LEVELS = [
 ] as const satisfies readonly EffortLevel[]
 
 export type EffortValue = EffortLevel | number
+
+const EFFORT_INPUT_ALIASES = {
+  xhigh: 'high',
+} as const
+
+export function normalizeEffortInput(value: string): string {
+  return EFFORT_INPUT_ALIASES[value as keyof typeof EFFORT_INPUT_ALIASES] ?? value
+}
+
+export function getEffortDisplayLabel(value: EffortValue): string {
+  if (typeof value === 'number') {
+    return String(value)
+  }
+  return value === 'high' ? 'xhigh' : value
+}
+
+export function getEffortDisplayTitle(value: EffortValue): string {
+  const label = getEffortDisplayLabel(value)
+  return label === 'xhigh' ? 'Xhigh' : label.charAt(0).toUpperCase() + label.slice(1)
+}
 
 // @[MODEL LAUNCH]: Add the new model to the allowlist if it supports the effort parameter.
 export function modelSupportsEffort(model: string): boolean {
@@ -77,7 +96,7 @@ export function parseEffortValue(value: unknown): EffortValue | undefined {
   if (typeof value === 'number' && isValidNumericEffort(value)) {
     return value
   }
-  const str = String(value).toLowerCase()
+  const str = normalizeEffortInput(String(value).toLowerCase())
   if (isEffortLevel(str)) {
     return str
   }
@@ -194,7 +213,7 @@ export function getEffortSuffix(
   if (effortValue === undefined) return ''
   const resolved = resolveAppliedEffort(model, effortValue)
   if (resolved === undefined) return ''
-  return ` with ${convertEffortValueToLevel(resolved)} effort`
+  return ` with ${getEffortDisplayLabel(convertEffortValueToLevel(resolved))} effort`
 }
 
 export function isValidNumericEffort(value: number): boolean {
@@ -261,9 +280,9 @@ export type OpusDefaultEffortConfig = {
 
 const OPUS_DEFAULT_EFFORT_CONFIG_DEFAULT: OpusDefaultEffortConfig = {
   enabled: true,
-  dialogTitle: 'We recommend medium effort for Opus',
+  dialogTitle: 'We recommend Xhigh effort for Opus',
   dialogDescription:
-    'Effort determines how long Claude thinks for when completing your task. We recommend medium effort for most tasks to balance speed and intelligence and maximize rate limits. Use ultrathink to trigger high effort when needed.',
+    'Effort determines how long Claude thinks for when completing your task. We recommend Xhigh effort by default so Claude reasons deeply without extra setup.',
 }
 
 export function getOpusDefaultEffortConfig(): OpusDefaultEffortConfig {
@@ -306,26 +325,14 @@ export function getDefaultEffortForModel(
   // the model launch DRI and research. Default effort is a sensitive setting
   // that can greatly affect model quality and bashing.
 
-  // Default effort on Opus 4.6 to medium for Pro.
-  // Max/Team also get medium when the tengu_grey_step2 config is enabled.
-  if (model.toLowerCase().includes('opus-4-6')) {
-    if (isProSubscriber()) {
-      return 'medium'
-    }
-    if (
-      getOpusDefaultEffortConfig().enabled &&
-      (isMaxSubscriber() || isTeamSubscriber())
-    ) {
-      return 'medium'
-    }
-  }
-
-  // When ultrathink feature is on, default effort to medium (ultrathink bumps to high)
   if (isUltrathinkEnabled() && modelSupportsEffort(model)) {
-    return 'medium'
+    return 'high'
   }
 
-  // Fallback to undefined, which means we don't set an effort level. This
-  // should resolve to high effort level in the API.
+  if (modelSupportsEffort(model)) {
+    return 'high'
+  }
+
+  // Fallback to undefined for models that do not support named effort levels.
   return undefined
 }

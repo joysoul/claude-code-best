@@ -5,6 +5,7 @@ import { isEnvTruthy } from './envUtils.js'
 import { getCanonicalName } from './model/model.js'
 import { resolveAntModel } from './model/antModels.js'
 import { getModelCapability } from './model/modelCapabilities.js'
+import { parseTokenBudget } from './tokenBudget.js'
 
 // Model context window size (200k tokens for all models right now)
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
@@ -40,6 +41,63 @@ export function has1mContext(model: string): boolean {
   return /\[1m\]/i.test(model)
 }
 
+const sessionContextWindowOverrides = new Map<string, number>()
+const TRAILING_CONTEXT_WINDOW_OVERRIDE_RE =
+  /^(.*\S)\s+(\+\d+(?:\.\d+)?\s*(?:k|m|b))$/i
+
+function normalizeContextOverrideModel(model: string): string {
+  return model.trim().toLowerCase()
+}
+
+export function getSessionContextWindowOverrideForModel(
+  model: string,
+): number | undefined {
+  return sessionContextWindowOverrides.get(normalizeContextOverrideModel(model))
+}
+
+export function setSessionContextWindowOverrideForModel(
+  model: string,
+  contextWindow: number,
+): void {
+  if (!Number.isFinite(contextWindow) || contextWindow <= 0) {
+    sessionContextWindowOverrides.delete(normalizeContextOverrideModel(model))
+    return
+  }
+
+  sessionContextWindowOverrides.set(
+    normalizeContextOverrideModel(model),
+    Math.round(contextWindow),
+  )
+}
+
+export function resetSessionContextWindowOverridesForTests(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error(
+      'resetSessionContextWindowOverridesForTests can only be called in tests',
+    )
+  }
+  sessionContextWindowOverrides.clear()
+}
+
+export function parseTrailingContextWindowOverride(
+  input: string,
+): { model: string; contextWindow: number } | null {
+  const match = input.trim().match(TRAILING_CONTEXT_WINDOW_OVERRIDE_RE)
+  if (!match) {
+    return null
+  }
+
+  const contextWindow = parseTokenBudget(match[2]!)
+  if (contextWindow === null) {
+    return null
+  }
+
+  return {
+    model: match[1]!,
+    contextWindow: Math.round(contextWindow),
+  }
+}
+
 // @[MODEL LAUNCH]: Update this pattern if the new model supports 1M context
 export function modelSupports1M(model: string): boolean {
   if (is1mContextDisabled()) {
@@ -53,6 +111,11 @@ export function getContextWindowForModel(
   model: string,
   betas?: string[],
 ): number {
+  const sessionOverride = getSessionContextWindowOverrideForModel(model)
+  if (sessionOverride !== undefined) {
+    return sessionOverride
+  }
+
   // Allow override via environment variable (ant-only)
   // This takes precedence over all other context window resolution, including 1M detection,
   // so users can cap the effective context window for local decisions (auto-compact, etc.)

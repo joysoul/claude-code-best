@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(printf '\\\\n---\\\\n')",
+      "Bash(/home/joy/.claude/skills/gstack/bin/gstack-config get:*)",
+      "Bash(printf 'exists\\\\n')",
+      "Bash(printf 'missing\\\\n')",
+      "Bash(python:*)",
+      "Bash(ls -la /home/joy/.claude/settings*.json /home/joy/.claude/keybindings*.json)",
+      "Bash(ls -la /home/joy/oucode/claude-code/.claude/*.json)",
+      "Skill(update-config)",
+      "Bash(git:*)",
+      "Bash(printf n---n)",
+      "Read(//usr/share/ghostty/themes/**)",
+      "Bash(ghostty +version)",
+      "Bash(ghostty +show-config)",
+      "Bash(ghostty +list-keybinds)",
+      "Bash(ghostty +show-config-file)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

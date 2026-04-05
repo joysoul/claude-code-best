@@ -37,6 +37,7 @@ import { execFileNoThrow, execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { gitExe } from '../git.js'
 import { logError } from '../log.js'
+import { getPluginManagerUserAgent } from '../userAgent.js'
 import {
   getInitialSettings,
   getSettingsForSource,
@@ -1273,7 +1274,7 @@ async function cacheMarketplaceFromUrl(
   const headers = {
     ...customHeaders,
     // User-Agent must come last to prevent override (for consistency with WebFetch)
-    'User-Agent': 'Claude-Code-Plugin-Manager',
+    'User-Agent': getPluginManagerUserAgent(),
   }
 
   let response
