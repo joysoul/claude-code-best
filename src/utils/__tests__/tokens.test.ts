@@ -46,6 +46,7 @@ const {
   getTokenCountFromUsage,
   getTokenUsage,
   tokenCountFromLastAPIResponse,
+  tokenCountWithEstimation,
   messageTokenCountFromLastAPIResponse,
   getCurrentUsage,
   doesMostRecentAssistantMessageExceed200k,
@@ -172,6 +173,22 @@ describe("tokenCountFromLastAPIResponse", () => {
       makeUserMessage("reply"),
     ];
     expect(tokenCountFromLastAPIResponse(msgs as any)).toBe(150);
+  });
+});
+
+describe("tokenCountWithEstimation", () => {
+  test("includes estimated user follow-up tokens after the last API response", () => {
+    const msgs = [
+      makeAssistantMessage([{ type: "text", text: "hi" }], {
+        input_tokens: 160000,
+        output_tokens: 1000,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+      }),
+      makeUserMessage("Please keep going with more details")
+    ];
+
+    expect(tokenCountWithEstimation(msgs as any)).toBeGreaterThan(161000);
   });
 });
 
